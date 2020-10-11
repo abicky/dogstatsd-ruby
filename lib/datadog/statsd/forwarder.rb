@@ -14,6 +14,7 @@ module Datadog
         buffer_max_payload_size: nil,
         buffer_max_pool_size: nil,
         buffer_overflowing_stategy: :drop,
+        buffer_flush_interval: nil,
 
         telemetry_flush_interval: nil,
         global_tags: [],
@@ -53,7 +54,7 @@ module Datadog
           overflowing_stategy: buffer_overflowing_stategy,
         )
 
-        @sender = Sender.new(buffer)
+        @sender = Sender.new(buffer, buffer_flush_interval: buffer_flush_interval)
         @sender.start
       end
 

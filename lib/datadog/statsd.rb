@@ -68,6 +68,7 @@ module Datadog
     # @option [Logger] logger for debugging
     # @option [Integer] buffer_max_payload_size max bytes to buffer
     # @option [Integer] buffer_max_pool_size max messages to buffer
+    # @option [Numeric] buffer_flush_interval interval in second to flush buffer
     # @option [String] socket_path unix socket path
     # @option [Float] default sample rate if not overridden
     def initialize(
@@ -82,6 +83,7 @@ module Datadog
       buffer_max_payload_size: nil,
       buffer_max_pool_size: nil,
       buffer_overflowing_stategy: :drop,
+      buffer_flush_interval: nil,
 
       logger: nil,
 
@@ -108,6 +110,7 @@ module Datadog
         buffer_max_payload_size: buffer_max_payload_size,
         buffer_max_pool_size: buffer_max_pool_size,
         buffer_overflowing_stategy: buffer_overflowing_stategy,
+        buffer_flush_interval: buffer_flush_interval,
 
         telemetry_flush_interval: telemetry_enable ? telemetry_flush_interval : nil,
       )

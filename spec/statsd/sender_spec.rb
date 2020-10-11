@@ -2,12 +2,13 @@ require 'spec_helper'
 
 describe Datadog::Statsd::Sender do
   subject do
-    described_class.new(message_buffer)
+    described_class.new(message_buffer, buffer_flush_interval: buffer_flush_interval)
   end
 
   let(:message_buffer) do
     instance_double(Datadog::Statsd::MessageBuffer)
   end
+  let(:buffer_flush_interval) { nil }
 
   describe '#start' do
     after do
@@ -31,6 +32,16 @@ describe Datadog::Statsd::Sender do
         end.to raise_error(ArgumentError, /Sender already started/)
       end
     end
+
+    context 'when buffer_flush_interval is set' do
+      let(:buffer_flush_interval) { 0.1 }
+
+      it 'starts a worker thread and a flush thread' do
+        expect do
+          subject.start
+        end.to change { Thread.list.size }.by(2)
+      end
+    end
   end
 
   describe '#stop' do
@@ -42,6 +53,25 @@ describe Datadog::Statsd::Sender do
       expect do
         subject.stop
       end.to change { Thread.list.size }.by(-1)
+    end
+
+    context 'when buffer_flush_interval is set' do
+      let(:buffer_flush_interval) { 0.1 }
+
+      it 'stops the worker thread and the flush thread' do
+        mutex = Mutex.new
+        cv = ConditionVariable.new
+        expect(subject).to receive(:flush).with(sync: true) do
+          mutex.synchronize { cv.broadcast }
+        end
+        # Wait until the flush thread starts
+        mutex.synchronize { cv.wait(mutex, 1) }
+
+        expect(subject).to receive(:flush).with(sync: false)
+        expect do
+          subject.stop
+        end.to change { Thread.list.size }.by(-2)
+      end
     end
   end
 
